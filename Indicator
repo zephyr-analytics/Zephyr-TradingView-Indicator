@@ -1,65 +1,87 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © zephyrcapitalgroup
+
 //@version=6
-indicator("Metrics Card + MA Signals", overlay=true)
+indicator("MA Signals + Fibonacci Bands", overlay=true)
 
-// ─────────────────────────────
+//─────────────────────────────
 // Inputs
-// ─────────────────────────────
-lookback   = input.int(252, title="Lookback Period (52W)", minval=1)
-maLength   = input.int(168, title="MA Length", minval=1)
-maType     = input.string("EMA", title="MA Type", options=["EMA", "SMA"])
+//─────────────────────────────
+maLength      = input.int(168, title="MA Length", minval=1)
+maType        = input.string("EMA", title="MA Type", options=["EMA", "SMA"])
+midlineWidth  = input.int(2, "Midline Width", minval=1, maxval=5)
+bandWidth     = input.int(1, "Band Width",    minval=1, maxval=5)
 
-// ─────────────────────────────
-// Data for Metrics
-// ─────────────────────────────
-price      = close
-high_52w   = ta.highest(price, lookback)
-low_52w    = ta.lowest(price, lookback)
-percentile = 100 * (price - low_52w) / (high_52w - low_52w)
-
-// ─────────────────────────────
+//─────────────────────────────
 // Moving Average Calculation
-// ─────────────────────────────
+//─────────────────────────────
+price    = close
 emaValue = ta.ema(price, maLength)
 smaValue = ta.sma(price, maLength)
-maValue  = maType == "EMA" ? emaValue : smaValue
+maValue  = maType == "EMA" ? emaValue : smaValue   // midline
 
-// ─────────────────────────────
-// Plot MA (two fixed plots, only one visible)
-// ─────────────────────────────
-plot(maType == "EMA" ? emaValue : na, color=color.black, linewidth=1, title="EMA")
-plot(maType == "SMA" ? smaValue : na, color=color.orange, linewidth=1, title="SMA")
+//─────────────────────────────
+// Fibonacci-style Volatility Bands
+//─────────────────────────────
 
-// ─────────────────────────────
-// Crossover Signals
-// ─────────────────────────────
+// Candle body extremes
+float toc = math.max(open, close)
+float boc = math.min(open, close)
+
+// Direction-aware effective close
+float effclose = close >= open ? toc : boc
+
+// Midline = selected MA
+float midline = maValue
+
+// Standard deviation of effclose
+float dev = ta.stdev(effclose, maLength)
+
+// Deviation multipliers
+float plusdevmult  = (toc > midline and dev != 0.0) ? (toc - midline) / dev : 0.0
+float minusdevmult = (boc < midline and dev != 0.0) ? (midline - boc) / dev : 0.0
+float maxmult      = math.max(plusdevmult, minusdevmult)
+
+// Smoothed stretch factor
+float lm  = ta.ema(maxmult, maLength)
+float lm2 = lm / 2.0
+float lm3 = lm2 * 0.38196601
+float lm4 = lm * 1.38196601
+float lm5 = lm * 1.61803399
+float lm6 = (lm + lm2) / 2.0
+
+//─────────────────────────────
+// Plot MA (midline) with its own width
+//─────────────────────────────
+plot(maType == "EMA" ? emaValue : na, color=color.black,  linewidth=midlineWidth, title="EMA")
+plot(maType == "SMA" ? smaValue : na, color=color.black, linewidth=midlineWidth, title="SMA")
+
+//─────────────────────────────
+// Fibonacci Bands with their own width
+//─────────────────────────────
+color bandColor = color.new(color.gray, 25)
+
+plot(midline + (dev * lm5), title="6 up",   color=bandColor, linewidth=bandWidth)
+plot(midline + (dev * lm4), title="5 up",   color=bandColor, linewidth=bandWidth)
+plot(midline + (dev * lm),  title="4 up",   color=bandColor, linewidth=bandWidth)
+plot(midline + (dev * lm6), title="3 up",   color=bandColor, linewidth=bandWidth)
+plot(midline + (dev * lm2), title="2 up",   color=bandColor, linewidth=bandWidth)
+plot(midline + (dev * lm3), title="1 up",   color=bandColor, linewidth=bandWidth)
+
+plot(midline - (dev * lm3), title="1 down", color=bandColor, linewidth=bandWidth)
+plot(midline - (dev * lm2), title="2 down", color=bandColor, linewidth=bandWidth)
+plot(midline - (dev * lm6), title="3 down", color=bandColor, linewidth=bandWidth)
+plot(midline - (dev * lm),  title="4 down", color=bandColor, linewidth=bandWidth)
+plot(midline - (dev * lm4), title="5 down", color=bandColor, linewidth=bandWidth)
+plot(midline - (dev * lm5), title="6 down", color=bandColor, linewidth=bandWidth)
+
+//─────────────────────────────
+// BUY/SELL Signals
+//─────────────────────────────
 longSignal  = ta.crossover(price, maValue)
 shortSignal = ta.crossunder(price, maValue)
 
-plotshape(longSignal,  style=shape.labelup,   location=location.belowbar, color=color.green, size=size.small, text="BUY",  textcolor=color.white)
-plotshape(shortSignal, style=shape.labeldown, location=location.abovebar, color=color.red,   size=size.small, text="SELL", textcolor=color.white)
-
-// ─────────────────────────────
-// Metrics Card Table
-// ─────────────────────────────
-var table card = table.new(position.bottom_right, 2, 5, border_width=1)
-
-if barstate.islast
-    // Header row
-    table.cell(card, 0, 0, "📈 Metrics", bgcolor=color.navy, text_color=color.white)
-    table.cell(card, 1, 0, "", bgcolor=color.navy)
-
-    // Row 1: Current Price
-    table.cell(card, 0, 1, "Current:", bgcolor=color.gray, text_color=color.white)
-    table.cell(card, 1, 1, str.tostring(price, format.mintick), bgcolor=color.black, text_color=color.white)
-
-    // Row 2: 52W High
-    table.cell(card, 0, 2, "52W High:", bgcolor=color.gray, text_color=color.white)
-    table.cell(card, 1, 2, str.tostring(high_52w, format.mintick), bgcolor=color.black, text_color=color.white)
-
-    // Row 3: 52W Low
-    table.cell(card, 0, 3, "52W Low:", bgcolor=color.gray, text_color=color.white)
-    table.cell(card, 1, 3, str.tostring(low_52w, format.mintick), bgcolor=color.black, text_color=color.white)
-
-    // Row 4: Percentile
-    table.cell(card, 0, 4, "Percentile:", bgcolor=color.gray, text_color=color.white)
-    table.cell(card, 1, 4, str.tostring(percentile, format.percent), bgcolor=color.black, text_color=color.white)
+plotshape(longSignal,  style=shape.labelup,   location=location.belowbar,
+          color=color.green, text="BUY",  textcolor=color.white)
+plotshape(shortSignal, style=shape.labeldown, location=location.abovebar,
+          color=color.red,   text="SELL", textcolor=color.white)
