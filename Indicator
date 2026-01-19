@@ -59,21 +59,19 @@ plot(maType == "SMA" ? smaValue : na, color=color.black, linewidth=midlineWidth,
 //─────────────────────────────
 // Fibonacci Bands with their own width
 //─────────────────────────────
-color bandColor = color.new(color.gray, 25)
+plot(midline + (dev * lm5), title="6 up",   color=color.purple, linewidth=bandWidth)
+plot(midline + (dev * lm4), title="5 up",   color=color.blue, linewidth=bandWidth)
+plot(midline + (dev * lm),  title="4 up",   color=color.green, linewidth=bandWidth)
+plot(midline + (dev * lm6), title="3 up",   color=color.yellow, linewidth=bandWidth)
+plot(midline + (dev * lm2), title="2 up",   color=color.orange, linewidth=bandWidth)
+plot(midline + (dev * lm3), title="1 up",   color=color.red, linewidth=bandWidth)
 
-plot(midline + (dev * lm5), title="6 up",   color=bandColor, linewidth=bandWidth)
-plot(midline + (dev * lm4), title="5 up",   color=bandColor, linewidth=bandWidth)
-plot(midline + (dev * lm),  title="4 up",   color=bandColor, linewidth=bandWidth)
-plot(midline + (dev * lm6), title="3 up",   color=bandColor, linewidth=bandWidth)
-plot(midline + (dev * lm2), title="2 up",   color=bandColor, linewidth=bandWidth)
-plot(midline + (dev * lm3), title="1 up",   color=bandColor, linewidth=bandWidth)
-
-plot(midline - (dev * lm3), title="1 down", color=bandColor, linewidth=bandWidth)
-plot(midline - (dev * lm2), title="2 down", color=bandColor, linewidth=bandWidth)
-plot(midline - (dev * lm6), title="3 down", color=bandColor, linewidth=bandWidth)
-plot(midline - (dev * lm),  title="4 down", color=bandColor, linewidth=bandWidth)
-plot(midline - (dev * lm4), title="5 down", color=bandColor, linewidth=bandWidth)
-plot(midline - (dev * lm5), title="6 down", color=bandColor, linewidth=bandWidth)
+plot(midline - (dev * lm3), title="1 down", color=color.red, linewidth=bandWidth)
+plot(midline - (dev * lm2), title="2 down", color=color.orange, linewidth=bandWidth)
+plot(midline - (dev * lm6), title="3 down", color=color.yellow, linewidth=bandWidth)
+plot(midline - (dev * lm),  title="4 down", color=color.green, linewidth=bandWidth)
+plot(midline - (dev * lm4), title="5 down", color=color.blue, linewidth=bandWidth)
+plot(midline - (dev * lm5), title="6 down", color=color.purple, linewidth=bandWidth)
 
 //─────────────────────────────
 // BUY/SELL Signals
