@@ -53,8 +53,8 @@ float lm6 = (lm + lm2) / 2.0
 //─────────────────────────────
 // Plot MA (midline) with its own width
 //─────────────────────────────
-plot(maType == "EMA" ? emaValue : na, color=color.black,  linewidth=midlineWidth, title="EMA")
-plot(maType == "SMA" ? smaValue : na, color=color.black, linewidth=midlineWidth, title="SMA")
+plot(maType == "EMA" ? emaValue : na, color=color.white,  linewidth=midlineWidth, title="EMA")
+plot(maType == "SMA" ? smaValue : na, color=color.white, linewidth=midlineWidth, title="SMA")
 
 //─────────────────────────────
 // Fibonacci Bands with their own width
